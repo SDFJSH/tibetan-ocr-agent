@@ -33,7 +33,7 @@ os.environ['ENABLE_QWEN'] = '1' if os.environ['QWEN_API_KEY'] and os.environ['QW
 from cloud_crnn import CachedCRNN
 from tib_agent.settings import Settings
 from tib_agent.pipeline import OCRPipeline
-from tib_agent.planner import qwen_endpoint_status
+from tib_agent.planner import qwen_endpoint_status, _endpoint_allowed
 
 CSS = """
 <style>
@@ -71,8 +71,18 @@ st.markdown('''<div class="z-hero">
 <p>CRNN专业识别 · 图像质量分析 · 动态复核 · 千问API任务规划 · Unicode文本导出</p>
 </div>''', unsafe_allow_html=True)
 
-settings = Settings()
-weight_path = Path(__file__).parent / 'models' / 'best.pt'
+# Re-read secrets at every Streamlit rerun instead of relying on
+# dataclass defaults that may have been frozen at module import time.
+_qwen_key = secret('QWEN_API_KEY', '')
+_qwen_url = secret('QWEN_API_URL', '')
+_qwen_model = secret('QWEN_MODEL', 'qwen3.5-flash')
+settings = Settings(
+    enable_qwen=bool(_qwen_key and _qwen_url),
+    qwen_api_key=_qwen_key,
+    qwen_api_url=_qwen_url,
+    qwen_model=_qwen_model,
+)
+weight_path = Path(__file__).parent / 'models' / 'best.pt' 
 agent_status = qwen_endpoint_status(settings)
 st.markdown(
     '<span class="z-chip">CRNN + CTC</span>'
@@ -85,6 +95,16 @@ m1.metric('OCR识别', '真实CRNN' if weight_path.exists() else '缺少权重')
 m2.metric('Agent规划', '千问API已配置' if settings.enable_qwen else '规则回退')
 m3.metric('历史测试集CER', '3.8%', help='用户此前实验结果，非当前图片实时准确率')
 st.caption('模型说明：千问云API负责规划与工具选择；所有藏文文字均由CRNN产生。')
+with st.expander('千问连接诊断（不会展示 API Key）'):
+    st.json({
+        'QWEN_API_KEY 已读取': bool(settings.qwen_api_key),
+        'QWEN_API_URL 已读取': bool(settings.qwen_api_url),
+        '接口地址通过安全校验': _endpoint_allowed(settings.qwen_api_url),
+        '千问开关已启用': settings.enable_qwen,
+        '模型名称': settings.qwen_model,
+        '配置状态': agent_status,
+    })
+    st.caption('配置通过仅说明可以尝试调用接口；真正成功需在任务结果中看到 qwen_api。')
 
 @st.cache_resource(show_spinner='首次加载CRNN权重中…')
 def load_crnn(path: str):

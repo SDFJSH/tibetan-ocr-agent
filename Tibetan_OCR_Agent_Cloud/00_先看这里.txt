@@ -1,0 +1,8 @@
+藏智录云端部署专用包（Streamlit + CRNN + 千问API）
+
+1. 本包没有包括你自己的 best.pt 权重，必须另外拷贝到 models/best.pt。
+2. 这是独立的Streamlit云端工程，不是原AutoDL Gradio工程的覆盖补丁！千万不要覆盖旧版 app.py。
+3. 千问使用阿里云百炼的云API模型（默认qwen3.5-flash），并非本地Qwen3-VL-4B。
+4. 先在AutoDL验证 python verify_crnn.py ... 的识别文字等于旧版。
+5. 完成GitHub仓库部署和Secrets后才会有真正可用的公网链接。
+6. 详情请看 README_部署步骤.md。

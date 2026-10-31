@@ -1,0 +1,4 @@
+请从AutoDL下载 /root/autodl-tmp/runs/crnn_final/best.pt
+并将其重命名/保存为本目录下的 best.pt。
+原始权重不包含在本包内，绝不要上传千问8.3GB权重。
+首次本地运行前，先执行：python verify_crnn.py --image 图片路径 --weights models/best.pt
